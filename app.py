@@ -1,7 +1,14 @@
 from flask import Flask
 
 app = Flask(__name__)
-
+@app.route("/contact")
+def contact():
+    return """
+    <h1>Contact Us</h1>
+    <p>Email: support@employeeportal.com</p>
+    <p>Phone: +91-9876543210</p>
+    <a href="/">Home</a>
+    """
 @app.route("/")
 def home():
     return """
