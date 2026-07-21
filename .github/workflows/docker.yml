@@ -1,4 +1,4 @@
-name: Employee Portal CI
+name: Employee Portal CI/CD
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-test:
+  build-test-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,4 +26,15 @@ jobs:
         run: python -m pytest tests/
 
       - name: Build Docker Image
-        run: docker build -t employee-portal .
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/employee-portal:latest .
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/employee-portal:latest
