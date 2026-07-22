@@ -1,0 +1,61 @@
+name: Employee Portal CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run Tests
+        run: python -m pytest tests/
+
+      - name: Determine image prefix (fallback to github.actor when secret missing)
+        id: image_prefix
+        run: |
+          if [ -n "${{ secrets.DOCKER_USERNAME }}" ]; then
+            echo "prefix=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_OUTPUT
+          else
+            echo "prefix=${{ github.actor }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Warn if Docker secrets missing
+        run: |
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ] || [ -z "${{ secrets.DOCKER_PASSWORD }}" ]; then
+            echo "WARNING: DOCKER_USERNAME or DOCKER_PASSWORD secret is not set. The workflow will skip login and will push to Docker Hub under the fallback user if you have permissions."
+          else
+            echo "Docker secrets set."
+          fi
+
+      - name: Login to Docker Hub
+        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        env:
+          IMAGE_PREFIX: ${{ steps.image_prefix.outputs.prefix }}
+        run: |
+          set -euo pipefail
+          IMAGE="${IMAGE_PREFIX}/employee-portal:latest"
+          echo "Building image ${IMAGE}"
+          docker build -t "${IMAGE}" .
+          echo "Pushing image ${IMAGE}"
+          docker push "${IMAGE}"
