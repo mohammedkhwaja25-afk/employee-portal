@@ -1,7 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: employee-portal
+  labels:
+    app: employee-portal
 
 spec:
   replicas: 2
@@ -17,11 +20,9 @@ spec:
 
     spec:
       containers:
-      - name: employee-portal
+        - name: employee-portal
+          image: mohammedkhaja25/employee-portal:latest
+          imagePullPolicy: Always
 
-        image: employee-portal:v1
-
-        imagePullPolicy: Never
-
-        ports:
-        - containerPort: 5000
+          ports:
+            - containerPort: 5000
