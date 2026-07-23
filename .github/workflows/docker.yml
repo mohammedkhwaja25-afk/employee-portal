@@ -6,11 +6,12 @@ on:
       - main
 
 jobs:
-  build-test-push:
+  build-test-deploy:
     runs-on: self-hosted
 
     env:
       PYTHONPATH: ${{ github.workspace }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
     steps:
       - name: Checkout Repository
@@ -50,3 +51,8 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/employee-portal:latest
+
+      - name: Deploy to Kubernetes
+        run: |
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh
